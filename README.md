@@ -89,7 +89,7 @@ pit_yearly = pit_stops_with_year.groupby('year')['duration_seconds'].mean()
 
 ## 🚀 View Live
 
-Check out the interactive telemetry archive: **[F1 Telemetry Archive](https://.github.io/f1-telemetry-archive/F1_TELEMETRY_ARCHIVE.html)**
+Check out the interactive telemetry archive: **[F1 Telemetry Archive](https://vanisharma24.github.io/F1-Telemetry-Archive/)**
 
 
 ---
