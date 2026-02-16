@@ -124,16 +124,9 @@ f1-telemetry-archive/
 │   ├── 07_lap_times.png
 │   └── 08_championship_margins.png
 │
-├── F1_TELEMETRY_ARCHIVE.html   # Main interactive website
-├── F1_COMPLETE_ANALYSIS.py     # Complete Python analysis
-├── beginner_starter.py          # Beginner-friendly script
-├── f1_analysis_complete.py      # Comprehensive analysis suite
-├── f1_advanced_analysis.py      # Advanced statistical analysis
-├── requirements.txt             # Python dependencies
-├── TUTORIAL.md                  # Step-by-step learning guide
-├── QUICK_REFERENCE.md           # Code reference and commands
-├── DEPLOYMENT_GUIDE.md          # Detailed deployment instructions
-└── README.md                    # This file
+├── index.html   # Main interactive website
+├── f1.py     # Complete Python analysis
+└── README.md                  
 ```
 
 ---
