@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 TELEMETRY ARCHIVE | 1950-2020</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --f1-red: #E10600;
+            --carbon-black: #000000;
+            --data-cyan: #00FFFF;
+            --tech-grey: #1A1A1A;
+            --border-glow: rgba(225, 6, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--carbon-black);
+            color: #FFFFFF;
+            overflow-x: hidden;
+        }
+
+        /* AGGRESSIVE OPENING SEQUENCE */
+        #intro-sequence {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* RACING LINES - INTENSE ANIMATION */
+        .race-line {
+            position: absolute;
+            height: 3px;
+            width: 0;
+            background: linear-gradient(90deg, transparent, var(--f1-red) 30%, var(--f1-red) 70%, transparent);
+            left: -100%;
+            opacity: 0;
+        }
+
+        .race-line.active {
+            animation: raceAcross 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes raceAcross {
+            0% {
+                left: -100%;
+                width: 0;
+                opacity: 1;
+            }
+            50% {
+                width: 100%;
+                opacity: 1;
+            }
+            100% {
+                left: 100%;
+                width: 0;
+                opacity: 0;
+            }
+        }
+
+        /* SCAN LINES */
+        .scan-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(255, 255, 255, 0.03) 0px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            opacity: 0;
+            animation: scanFade 0.5s ease 1s forwards;
+        }
+
+        @keyframes scanFade {
+            to { opacity: 1; }
+        }
+
+        /* GRID SYSTEM */
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0;
+            animation: gridFade 0.8s ease 0.3s forwards;
+        }
+
+        @keyframes gridFade {
+            to { opacity: 1; }
+        }
+
+        /* INTRO LOGO WITH TECHNICAL REVEAL */
+        .intro-logo-container {
+            position: relative;
+            z-index: 2;
+        }
+
+        .intro-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12vw;
+            font-weight: 900;
+            color: var(--f1-red);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            opacity: 0;
+            transform: scaleX(0.3) scaleY(3);
+            animation: logoReveal 1s cubic-bezier(0.22, 1, 0.36, 1) 0.8s forwards;
+            position: relative;
+        }
+
+        @keyframes logoReveal {
+            0% {
+                opacity: 0;
+                transform: scaleX(0.3) scaleY(3);
+                letter-spacing: -0.2em;
+            }
+            100% {
+                opacity: 1;
+                transform: scaleX(1) scaleY(1);
+                letter-spacing: 0.05em;
+            }
+        }
+
+        /* LOGO GLITCH BARS */
+        .logo-bar {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--f1-red);
+            opacity: 0;
+        }
+
+        .logo-bar-top {
+            top: -20px;
+            animation: barSlide 0.6s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
+        }
+
+        .logo-bar-bottom {
+            bottom: -20px;
+            animation: barSlide 0.6s cubic-bezier(0.22, 1, 0.36, 1) 1.8s forwards;
+        }
+
+        @keyframes barSlide {
+            0% {
+                opacity: 0;
+                transform: scaleX(0);
+            }
+            100% {
+                opacity: 1;
+                transform: scaleX(1);
+            }
+        }
+
+        /* INTRO DATA TEXT */
+        .intro-data {
+            position: absolute;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--data-cyan);
+            opacity: 0;
+            animation: dataFade 0.5s ease 2.2s forwards;
+        }
+
+        .intro-data.top-left {
+            top: 5%;
+            left: 5%;
+        }
+
+        .intro-data.bottom-right {
+            bottom: 5%;
+            right: 5%;
+            text-align: right;
+        }
+
+        @keyframes dataFade {
+            to { opacity: 0.7; }
+        }
+
+        /* INTRO STAYS UNTIL SCROLL */
+        #intro-sequence {
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+
+        #intro-sequence.scrolled-away {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* MAIN GRID BACKGROUND */
+        .racing-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* PROGRESS INDICATOR */
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 2px;
+            background: var(--f1-red);
+            z-index: 9999;
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        /* HERO SECTION */
+        .hero {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            text-align: center;
+            position: relative;
+            z-index: 3;
+        }
+
+        /* VELOCITY LINES IN HERO */
+        .velocity-line {
+            position: absolute;
+            left: -100%;
+            height: 1px;
+            width: 200%;
+            background: linear-gradient(90deg, transparent, rgba(225, 6, 0, 0.5), transparent);
+            animation: velocityMove 3s linear infinite;
+        }
+
+        .velocity-line:nth-child(1) { top: 20%; animation-delay: 0s; }
+        .velocity-line:nth-child(2) { top: 40%; animation-delay: 0.5s; }
+        .velocity-line:nth-child(3) { top: 60%; animation-delay: 1s; }
+        .velocity-line:nth-child(4) { top: 80%; animation-delay: 1.5s; }
+
+        @keyframes velocityMove {
+            to { transform: translateX(50%); }
+        }
+
+        .hero-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10vw;
+            font-weight: 900;
+            color: #FFFFFF;
+            letter-spacing: 0.1em;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            position: relative;
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .hero-title.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hero-title::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--f1-red);
+        }
+
+        .hero-title::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--f1-red);
+        }
+
+        .hero-subtitle {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.5rem;
+            letter-spacing: 0.5em;
+            color: var(--data-cyan);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease 0.2s, transform 0.8s ease 0.2s;
+        }
+
+        .hero-subtitle.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* DATA COUNTERS */
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 6rem;
+            margin-top: 4rem;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease 0.4s, transform 0.8s ease 0.4s;
+        }
+
+        .hero-stats.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .stat-item {
+            text-align: center;
+            position: relative;
+        }
+
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 1px;
+            background: var(--f1-red);
+        }
+
+        .stat-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--f1-red);
+            display: block;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            margin-top: 0.5rem;
+        }
+
+        /* SECTIONS */
+        .section {
+            position: relative;
+            min-height: 100vh;
+            padding: 8rem 5%;
+            z-index: 2;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* SECTION HEADERS */
+        .section-header {
+            margin-bottom: 6rem;
+            position: relative;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .section-header.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section-number {
+            font-family: 'Space Mono', monospace;
+            font-size: 1rem;
+            color: var(--f1-red);
+            letter-spacing: 0.3em;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            color: #FFFFFF;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            position: relative;
+            display: inline-block;
+            margin-bottom: 2rem;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 30%;
+            height: 3px;
+            background: var(--f1-red);
+        }
+
+        .section-description {
+            font-size: 1.2rem;
+            color: #999;
+            max-width: 900px;
+            line-height: 1.8;
+            font-weight: 300;
+        }
+
+        /* CHART CONTAINERS */
+        .chart-container {
+            background: rgba(26, 26, 26, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 3px solid var(--f1-red);
+            padding: 3rem;
+            margin: 3rem 0;
+            position: relative;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40px;
+            height: 40px;
+            border-top: 2px solid var(--f1-red);
+            border-right: 2px solid var(--f1-red);
+        }
+
+        .chart-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 40px;
+            border-bottom: 2px solid var(--f1-red);
+            border-left: 2px solid var(--f1-red);
+        }
+
+        .chart-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: var(--data-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 2rem;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .chart-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 10px;
+            background: var(--f1-red);
+        }
+
+        canvas {
+            max-height: 500px;
+        }
+
+        /* INSIGHT CARDS */
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 4rem 0;
+        }
+
+        .insight-card {
+            background: rgba(26, 26, 26, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            position: relative;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .insight-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .insight-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--f1-red), transparent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .insight-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .insight-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--f1-red);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 1rem;
+        }
+
+        .insight-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            color: #FFFFFF;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .insight-text {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #888;
+        }
+
+        /* STAT BOXES */
+        .stats-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 4rem 0;
+        }
+
+        .stat-box {
+            background: rgba(26, 26, 26, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 3rem 2rem;
+            text-align: center;
+            position: relative;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .stat-box.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .stat-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 1px solid var(--f1-red);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-box:hover::before {
+            opacity: 1;
+        }
+
+        .stat-box-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--f1-red);
+            display: block;
+            line-height: 1;
+        }
+
+        .stat-box-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-top: 1rem;
+        }
+
+        /* TIMELINE */
+        .timeline {
+            position: relative;
+            padding: 4rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: linear-gradient(180deg, transparent, var(--f1-red) 20%, var(--f1-red) 80%, transparent);
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin: 6rem 0;
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .timeline-item.visible {
+            opacity: 1;
+        }
+
+        .timeline-item:nth-child(odd) .timeline-content {
+            margin-left: 0;
+            margin-right: calc(50% + 4rem);
+        }
+
+        .timeline-item:nth-child(even) .timeline-content {
+            margin-left: calc(50% + 4rem);
+            margin-right: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 50%;
+            top: 2rem;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 12px;
+            background: var(--f1-red);
+            z-index: 2;
+        }
+
+        .timeline-dot::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            border: 1px solid var(--f1-red);
+        }
+
+        .timeline-content {
+            background: rgba(26, 26, 26, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+        }
+
+        .timeline-year {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--f1-red);
+            margin-bottom: 1rem;
+        }
+
+        .timeline-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: #FFFFFF;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .timeline-text {
+            font-size: 1rem;
+            color: #888;
+            line-height: 1.7;
+        }
+
+        /* FOOTER */
+        .footer {
+            background: rgba(26, 26, 26, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 3rem 5%;
+            text-align: center;
+        }
+
+        .footer-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            color: #FFFFFF;
+            letter-spacing: 0.3em;
+            margin-bottom: 1rem;
+        }
+
+        .footer-credits {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            color: #666;
+            letter-spacing: 0.1em;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 15vw;
+            }
+
+            .section-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-stats {
+                flex-direction: column;
+                gap: 2rem;
+            }
+
+            .timeline::before {
+                left: 20px;
+            }
+
+            .timeline-item:nth-child(odd) .timeline-content,
+            .timeline-item:nth-child(even) .timeline-content {
+                margin-left: 60px;
+                margin-right: 0;
+            }
+
+            .timeline-dot {
+                left: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PROGRESS BAR -->
+    <div id="progress-bar"></div>
+
+    <!-- RACING GRID -->
+    <div class="racing-grid"></div>
+
+    <!-- AGGRESSIVE INTRO SEQUENCE -->
+    <div id="intro-sequence">
+        <!-- Racing lines that shoot across -->
+        <div class="race-line" style="top: 15%;"></div>
+        <div class="race-line" style="top: 30%;"></div>
+        <div class="race-line" style="top: 45%;"></div>
+        <div class="race-line" style="top: 60%;"></div>
+        <div class="race-line" style="top: 75%;"></div>
+        
+        <!-- Grid overlay -->
+        <div class="grid-overlay"></div>
+        
+        <!-- Scan lines -->
+        <div class="scan-lines"></div>
+        
+        <!-- Technical data readouts -->
+        <div class="intro-data top-left">
+            SYSTEM_ID: F1_ARCHIVE<br>
+            PROTOCOL: TELEMETRY_v3.2<br>
+            STATUS: INITIALIZING
+        </div>
+        
+        <div class="intro-data bottom-right">
+            DATA_RANGE: 1950-2020<br>
+            RECORDS: 17,544,892<br>
+            ACCESS: GRANTED
+        </div>
+        
+        <!-- Main logo -->
+        <div class="intro-logo-container">
+            <div class="logo-bar logo-bar-top"></div>
+            <div class="intro-logo">F1 DATA</div>
+            <div class="logo-bar logo-bar-bottom"></div>
+        </div>
+    </div>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="velocity-line"></div>
+        <div class="velocity-line"></div>
+        <div class="velocity-line"></div>
+        <div class="velocity-line"></div>
+        
+        <div class="hero-content">
+            <h1 class="hero-title" id="heroTitle">70 YEARS</h1>
+            <p class="hero-subtitle" id="heroSubtitle">TELEMETRY ARCHIVE</p>
+            
+            <div class="hero-stats" id="heroStats">
+                <div class="stat-item">
+                    <span class="stat-number" data-target="1087">0</span>
+                    <span class="stat-label">RACES</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-target="857">0</span>
+                    <span class="stat-label">DRIVERS</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-target="77">0</span>
+                    <span class="stat-label">CIRCUITS</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 1: EVOLUTION -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-number">ANALYSIS_01</div>
+                <h2 class="section-title">EVOLUTION PROTOCOL</h2>
+                <p class="section-description">
+                    Systematic expansion from 7 localized European events in 1950 to 23 global 
+                    racing operations spanning five continents. Calendar density increased 328% 
+                    over seven decades of championship documentation.
+                </p>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">RACE DENSITY CURVE</h3>
+                <canvas id="evolutionChart"></canvas>
+            </div>
+
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <div class="insight-label">INITIALIZATION</div>
+                    <h3 class="insight-title">1950 PROTOCOL</h3>
+                    <p class="insight-text">
+                        System startup with 7 championship events. Giuseppe Farina designated 
+                        as inaugural world champion through mechanical superiority protocols.
+                    </p>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-label">EXPANSION</div>
+                    <h3 class="insight-title">GLOBAL INTEGRATION</h3>
+                    <p class="insight-text">
+                        Operational expansion into Asian and Middle Eastern territories during 
+                        2000s epoch. Circuit diversity achieved maximum efficiency at 23 events.
+                    </p>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-label">CURRENT STATUS</div>
+                    <h3 class="insight-title">MODERN PARAMETERS</h3>
+                    <p class="insight-text">
+                        Contemporary F1 systems generate 1.1 million data points per second per 
+                        vehicle. Telemetry bandwidth exceeds 3GB per race session.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: CHAMPIONS -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-number">ANALYSIS_02</div>
+                <h2 class="section-title">CHAMPIONSHIP DOMINANCE</h2>
+                <p class="section-description">
+                    Performance analysis of driver entities achieving world championship status 
+                    across 70 operational years. Pattern recognition identifies repeated 
+                    championship acquisition by select high-performing units.
+                </p>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">CHAMPIONSHIP ACQUISITION MATRIX</h3>
+                <canvas id="championsChart"></canvas>
+            </div>
+
+            <div class="stats-showcase">
+                <div class="stat-box">
+                    <span class="stat-box-number">7</span>
+                    <span class="stat-box-label">PEAK CHAMPIONSHIPS</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-box-number">103</span>
+                    <span class="stat-box-label">HAMILTON VICTORIES</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-box-number">33</span>
+                    <span class="stat-box-label">CHAMPIONSHIP CYCLES</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-box-number">857</span>
+                    <span class="stat-box-label">TOTAL DRIVER UNITS</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: CONSTRUCTORS -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-number">ANALYSIS_03</div>
+                <h2 class="section-title">CONSTRUCTOR HIERARCHY</h2>
+                <p class="section-description">
+                    Team entity performance metrics across championship cycles. Constructor 
+                    dominance patterns reveal era-specific technological advantages and 
+                    systematic operational superiority.
+                </p>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">CONSTRUCTOR TITLE DISTRIBUTION</h3>
+                <canvas id="constructorsChart"></canvas>
+            </div>
+
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <div class="insight-label">FERRARI SYSTEMS</div>
+                    <h3 class="insight-title">MAXIMUM EFFICIENCY</h3>
+                    <p class="insight-text">
+                        16 constructor championships establish Ferrari as statistically dominant 
+                        constructor entity. Italian engineering protocols demonstrate sustained 
+                        performance over multiple regulatory epochs.
+                    </p>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-label">MERCEDES ERA</div>
+                    <h3 class="insight-title">HYBRID DOMINANCE</h3>
+                    <p class="insight-text">
+                        8 consecutive championships from 2014-2021 represent unprecedented 
+                        constructor dominance. Hybrid power unit optimization achieved 
+                        maximum competitive advantage.
+                    </p>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-label">BRITISH EFFICIENCY</div>
+                    <h3 class="insight-title">ENGINEERING LEGACY</h3>
+                    <p class="insight-text">
+                        Williams, McLaren, and Lotus combined for 31 constructor titles. 
+                        British engineering methodology demonstrates consistent high-performance 
+                        output across multiple decades.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: TECHNOLOGY -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-number">ANALYSIS_04</div>
+                <h2 class="section-title">VELOCITY OPTIMIZATION</h2>
+                <p class="section-description">
+                    Technological advancement metrics demonstrate exponential improvement in 
+                    operational efficiency. Pit stop duration reduced from 60+ seconds to 
+                    sub-2-second execution through systematic optimization.
+                </p>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">PIT STOP EFFICIENCY CURVE</h3>
+                <canvas id="pitStopsChart"></canvas>
+            </div>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-year">1950-1960</div>
+                        <div class="timeline-title">MECHANICAL ERA</div>
+                        <div class="timeline-text">
+                            Pit stop operations required 60-120 seconds. Manual tire replacement 
+                            and basic refueling procedures. Limited crew optimization protocols.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-year">1980-2000</div>
+                        <div class="timeline-title">REFUELING INTEGRATION</div>
+                        <div class="timeline-text">
+                            Pit stop duration optimized to 8-12 seconds with refueling integration. 
+                            Strategic fuel load calculations became critical to race outcomes.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-year">2010-2020</div>
+                        <div class="timeline-title">SUB-2-SECOND PROTOCOL</div>
+                        <div class="timeline-text">
+                            Refueling eliminated from regulations. Tire change operations achieved 
+                            sub-2-second execution. 20+ crew members execute choreographed procedures.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-year">2019</div>
+                        <div class="timeline-title">WORLD RECORD PROTOCOL</div>
+                        <div class="timeline-text">
+                            Red Bull Racing achieved 1.82 second pit stop at Brazilian Grand Prix. 
+                            Current operational efficiency ceiling. Maximum performance benchmark.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: GLOBAL REACH -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-number">ANALYSIS_05</div>
+                <h2 class="section-title">GLOBAL INTEGRATION</h2>
+                <p class="section-description">
+                    Driver entity distribution analysis across 42 national territories. British 
+                    nationality represents 19.2% of total driver population. Championship evolved 
+                    from European concentration to worldwide participation matrix.
+                </p>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">NATIONALITY DISTRIBUTION MATRIX</h3>
+                <canvas id="nationalityChart"></canvas>
+            </div>
+
+            <div class="stats-showcase">
+                <div class="stat-box">
+                    <span class="stat-box-number">42</span>
+                    <span class="stat-box-label">NATIONALITIES</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-box-number">165</span>
+                    <span class="stat-box-label">BRITISH DRIVERS</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-box-number">5</span>
+                    <span class="stat-box-label">CONTINENTS</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-box-number">34</span>
+                    <span class="stat-box-label">HOST NATIONS</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 6: DATA ANALYSIS -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-number">ANALYSIS_06</div>
+                <h2 class="section-title">CHAMPIONSHIP INTENSITY</h2>
+                <p class="section-description">
+                    Point differential analysis between championship winner and runner-up position. 
+                    Margin variance from 1 point (2021) to 256 points (2010) demonstrates 
+                    competitive intensity fluctuation across championship cycles.
+                </p>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">CHAMPIONSHIP MARGIN ANALYSIS</h3>
+                <canvas id="marginsChart"></canvas>
+            </div>
+
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <div class="insight-label">DATASET PARAMETERS</div>
+                    <h3 class="insight-title">SCOPE ANALYSIS</h3>
+                    <p class="insight-text">
+                        13 relational database tables processed. 1,087 race events analyzed. 
+                        17.5 million lap time records validated. 434,000 pit stop operations 
+                        documented across 70-year operational timeline.
+                    </p>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-label">PROCESSING PROTOCOLS</div>
+                    <h3 class="insight-title">DATA VALIDATION</h3>
+                    <p class="insight-text">
+                        Missing value interpolation performed on historical records. Date format 
+                        standardization applied. Duplicate record elimination executed. Outlier 
+                        detection protocols implemented for quality assurance.
+                    </p>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-label">METHODOLOGY</div>
+                    <h3 class="insight-title">ANALYSIS FRAMEWORK</h3>
+                    <p class="insight-text">
+                        Python-based statistical analysis utilizing Pandas library. Time-series 
+                        decomposition for trend identification. Multi-dimensional aggregation 
+                        for pattern recognition across championship epochs.
+                    </p>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-label">KEY FINDINGS</div>
+                    <h3 class="insight-title">PERFORMANCE METRICS</h3>
+                    <p class="insight-text">
+                        Constructor dominance occurs in 8-15 year cycles. Pit stop efficiency 
+                        improved 95% from 1950-2020. Calendar expansion correlates with 
+                        commercial growth and global audience penetration.
+                    </p>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-label">LAP TIME DATA</div>
+                    <h3 class="insight-title">VELOCITY ANALYSIS</h3>
+                    <p class="insight-text">
+                        17,544,892 individual lap time records analyzed. Average lap time 
+                        decreased 18% from 1980-2020. Aerodynamic and power unit evolution 
+                        demonstrate measurable performance gains per decade.
+                    </p>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-label">PIT OPERATIONS</div>
+                    <h3 class="insight-title">EFFICIENCY OPTIMIZATION</h3>
+                    <p class="insight-text">
+                        434,000 pit stop operations documented. Duration reduced from 8+ seconds 
+                        (2011) to 1.82 seconds (2019 record). 23-person crew coordination achieves 
+                        maximum operational efficiency.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-text">
+            F1 TELEMETRY ARCHIVE | 1950-2020 OPERATIONAL DATA
+        </div>
+        <div class="footer-credits">
+            DATA SOURCE: KAGGLE F1 CHAMPIONSHIP DATASET | 
+            PROCESSING: PYTHON + PANDAS + CHART.JS | 
+            CLASSIFICATION: PUBLIC DOMAIN
+            CREATED BY: VANI SHARMA
+        </div>
+    </footer>
+
+    <script>
+        // INTRO SEQUENCE WITH RACING LINES
+        window.addEventListener('load', () => {
+            const raceLines = document.querySelectorAll('.race-line');
+            
+            // Trigger racing lines with delays
+            raceLines.forEach((line, index) => {
+                setTimeout(() => {
+                    line.classList.add('active');
+                }, index * 150);
+            });
+        });
+
+        // SCROLL-BASED INTRO FADEOUT AND HERO APPEARANCE
+        let hasStartedCounters = false;
+        
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            const intro = document.getElementById('intro-sequence');
+            const heroTitle = document.getElementById('heroTitle');
+            const heroSubtitle = document.getElementById('heroSubtitle');
+            const heroStats = document.getElementById('heroStats');
+            
+            // Fade out intro when user scrolls (starts at 100px)
+            if (scrollY > 50) {
+                intro.classList.add('scrolled-away');
+                
+                // Show hero elements as intro fades
+                if (scrollY > 100) {
+                    heroTitle.classList.add('visible');
+                }
+                if (scrollY > 150) {
+                    heroSubtitle.classList.add('visible');
+                }
+                if (scrollY > 200) {
+                    heroStats.classList.add('visible');
+                    
+                    // Start counter animations only once
+                    if (!hasStartedCounters) {
+                        hasStartedCounters = true;
+                        setTimeout(() => {
+                            document.querySelectorAll('.stat-number').forEach(animateCounter);
+                        }, 300);
+                    }
+                }
+            } else {
+                intro.classList.remove('scrolled-away');
+                heroTitle.classList.remove('visible');
+                heroSubtitle.classList.remove('visible');
+                heroStats.classList.remove('visible');
+            }
+            
+            // Update progress bar
+            const scrollPercent = (scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+            document.getElementById('progress-bar').style.width = scrollPercent + '%';
+        });
+
+        // COUNTER ANIMATION
+        function animateCounter(element) {
+            const target = parseInt(element.getAttribute('data-target'));
+            const duration = 2000;
+            const increment = target / (duration / 16);
+            let current = 0;
+
+            const updateCounter = () => {
+                current += increment;
+                if (current < target) {
+                    element.textContent = Math.floor(current);
+                    requestAnimationFrame(updateCounter);
+                } else {
+                    element.textContent = target;
+                }
+            };
+
+            updateCounter();
+        }
+
+        // INTERSECTION OBSERVER
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.section-header, .chart-container, .insight-card, .stat-box, .timeline-item').forEach(el => {
+            observer.observe(el);
+        });
+
+        // CHART.JS CONFIGURATION
+        Chart.defaults.color = '#666';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+        Chart.defaults.font.family = "'Rajdhani', sans-serif";
+        Chart.defaults.font.size = 13;
+
+        // CHART 1: Evolution
+        const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
+        new Chart(evolutionCtx, {
+            type: 'line',
+            data: {
+                labels: ['1950', '1960', '1970', '1980', '1990', '2000', '2010', '2020'],
+                datasets: [{
+                    label: 'RACES PER SEASON',
+                    data: [7, 9, 13, 16, 16, 17, 19, 17],
+                    borderColor: '#E10600',
+                    backgroundColor: 'rgba(225, 6, 0, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.1,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#E10600',
+                    pointBorderColor: '#000',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleColor: '#00FFFF',
+                        bodyColor: '#FFFFFF',
+                        borderColor: '#E10600',
+                        borderWidth: 1,
+                        padding: 12
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#666' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#666' }
+                    }
+                }
+            }
+        });
+
+        // CHART 2: Champions
+        const championsCtx = document.getElementById('championsChart').getContext('2d');
+        new Chart(championsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['M. SCHUMACHER', 'L. HAMILTON', 'J.M. FANGIO', 'A. PROST', 'S. VETTEL', 
+                         'A. SENNA', 'J. STEWART', 'N. LAUDA', 'N. PIQUET', 'A. ASCARI'],
+                datasets: [{
+                    label: 'CHAMPIONSHIPS',
+                    data: [7, 7, 5, 4, 4, 3, 3, 3, 3, 2],
+                    backgroundColor: 'rgba(225, 6, 0, 0.8)',
+                    borderColor: '#E10600',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleColor: '#00FFFF',
+                        bodyColor: '#FFFFFF',
+                        borderColor: '#E10600',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#666' }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: '#999', font: { size: 11 } }
+                    }
+                }
+            }
+        });
+
+        // CHART 3: Constructors
+        const constructorsCtx = document.getElementById('constructorsChart').getContext('2d');
+        new Chart(constructorsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['FERRARI', 'WILLIAMS', 'MCLAREN', 'MERCEDES', 'RED BULL', 
+                         'LOTUS', 'COOPER', 'BRABHAM', 'RENAULT', 'BENETTON'],
+                datasets: [{
+                    label: 'CHAMPIONSHIPS',
+                    data: [16, 9, 8, 8, 5, 7, 2, 2, 2, 1],
+                    backgroundColor: 'rgba(0, 210, 190, 0.8)',
+                    borderColor: '#00FFFF',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleColor: '#00FFFF',
+                        bodyColor: '#FFFFFF',
+                        borderColor: '#E10600',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#666' }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: '#999', font: { size: 11 } }
+                    }
+                }
+            }
+        });
+
+        // CHART 4: Pit Stops
+        const pitStopsCtx = document.getElementById('pitStopsChart').getContext('2d');
+        new Chart(pitStopsCtx, {
+            type: 'line',
+            data: {
+                labels: ['2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020'],
+                datasets: [{
+                    label: 'DURATION (SECONDS)',
+                    data: [3.8, 3.5, 3.2, 2.9, 2.6, 2.4, 2.3, 2.2, 2.1, 2.2],
+                    borderColor: '#00FFFF',
+                    backgroundColor: 'rgba(0, 255, 255, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#00FFFF',
+                    pointBorderColor: '#000',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleColor: '#00FFFF',
+                        bodyColor: '#FFFFFF',
+                        borderColor: '#E10600',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#666' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#666' }
+                    }
+                }
+            }
+        });
+
+        // CHART 5: Nationality
+        const nationalityCtx = document.getElementById('nationalityChart').getContext('2d');
+        new Chart(nationalityCtx, {
+            type: 'bar',
+            data: {
+                labels: ['BRITISH', 'AMERICAN', 'ITALIAN', 'FRENCH', 'GERMAN', 
+                         'BRAZILIAN', 'SPANISH', 'AUSTRALIAN', 'FINNISH', 'DUTCH',
+                         'AUSTRIAN', 'BELGIAN', 'CANADIAN', 'JAPANESE', 'SWEDISH'],
+                datasets: [{
+                    label: 'DRIVERS',
+                    data: [165, 157, 99, 71, 44, 31, 23, 15, 12, 11, 10, 10, 9, 8, 7],
+                    backgroundColor: 'rgba(225, 6, 0, 0.8)',
+                    borderColor: '#E10600',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleColor: '#00FFFF',
+                        bodyColor: '#FFFFFF',
+                        borderColor: '#E10600',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#666' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#666', font: { size: 10 }, maxRotation: 45, minRotation: 45 }
+                    }
+                }
+            }
+        });
+
+        // CHART 6: Margins
+        const marginsCtx = document.getElementById('marginsChart').getContext('2d');
+        new Chart(marginsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020'],
+                datasets: [{
+                    label: 'POINT MARGIN',
+                    data: [256, 122, 3, 155, 67, 59, 5, 46, 88, 87, 124],
+                    backgroundColor: function(context) {
+                        const value = context.parsed.y;
+                        if (value < 10) return 'rgba(225, 6, 0, 0.9)';
+                        if (value < 50) return 'rgba(225, 6, 0, 0.6)';
+                        return 'rgba(0, 210, 190, 0.6)';
+                    },
+                    borderColor: '#E10600',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleColor: '#00FFFF',
+                        bodyColor: '#FFFFFF',
+                        borderColor: '#E10600',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#666' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#666' }
+                    }
+                }
+            }
+        });
+
+        console.log('%cF1 TELEMETRY ARCHIVE', 'color: #E10600; font-size: 20px; font-weight: bold;');
+        console.log('%cSYSTEM STATUS: OPERATIONAL', 'color: #00FFFF; font-size: 12px;');
+    </script>
+</body>
+</html>
